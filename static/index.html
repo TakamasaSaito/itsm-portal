@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ITSM Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--navy:#1a2340;--gold:#c9a84c;--white:#fff;--sidebar:240px;--hh:56px;--gray:#f3f4f6;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;font-size:14px;color:var(--text);background:var(--gray)}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit;font-size:14px}
+select,input,textarea{font-family:inherit;font-size:14px}
+/* ── Login ─────────────────────────────────────────────── */
+#screen-login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--navy)}
+.login-box{background:var(--white);border-radius:12px;padding:40px 48px;width:360px;text-align:center}
+.login-logo{color:var(--navy);font-size:22px;font-weight:700;margin-bottom:8px}
+.login-logo span{color:var(--gold)}
+.login-box p{color:var(--muted);font-size:13px;margin-bottom:28px}
+.login-box label{display:block;text-align:left;font-weight:600;margin-bottom:4px;font-size:13px}
+.login-box input{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:16px;outline:none}
+.login-box input:focus{border-color:var(--navy)}
+.btn-primary{background:var(--navy);color:var(--white);border:none;border-radius:6px;padding:11px 24px;font-weight:600;width:100%}
+.btn-primary:hover{background:#243060}
+#login-error{color:#dc2626;font-size:13px;margin-bottom:12px;display:none}
+/* ── Header ─────────────────────────────────────────────── */
+#screen-app{display:none}
+#app-header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--navy);color:var(--white);display:flex;align-items:center;padding:0 20px;z-index:200;gap:12px}
+.header-logo{font-size:17px;font-weight:700;letter-spacing:.5px}
+.header-logo span{color:var(--gold)}
+.hspace{flex:1}
+.view-toggle{display:flex;border:1px solid rgba(255,255,255,.3);border-radius:6px;overflow:hidden}
+.view-toggle button{background:transparent;color:rgba(255,255,255,.7);border:none;padding:6px 14px;font-size:13px;transition:all .2s}
+.view-toggle button.active{background:var(--gold);color:var(--navy);font-weight:700}
+.header-user{color:rgba(255,255,255,.8);font-size:13px}
+.btn-logout{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 12px;font-size:12px}
+.btn-logout:hover{background:rgba(255,255,255,.1)}
+/* ── Sidebar ─────────────────────────────────────────────── */
+#sidebar{position:fixed;top:var(--hh);left:0;width:var(--sidebar);height:calc(100vh - var(--hh));background:var(--navy);overflow-y:auto;z-index:100}
+.sb-section{padding:16px 0 4px}
+.sb-section-title{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:1.5px;padding:0 20px 6px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.75);cursor:pointer;transition:all .15s;font-size:13px}
+.sb-item:hover{background:rgba(255,255,255,.08);color:var(--white)}
+.sb-item.active{background:rgba(201,168,76,.2);color:var(--gold);border-right:3px solid var(--gold)}
+.sb-item.disabled{color:rgba(255,255,255,.3);cursor:default;pointer-events:none}
+/* ── Admin main ──────────────────────────────────────────── */
+#admin-view{display:flex}
+#admin-main{margin-left:var(--sidebar);margin-top:var(--hh);padding:24px;min-height:calc(100vh - var(--hh));flex:1}
+#portal-view{display:none;margin-top:var(--hh)}
+/* ── Section helpers ─────────────────────────────────────── */
+.section-hd{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.section-hd h2{font-size:20px;font-weight:700;color:var(--navy);flex:1}
+/* ── KPI ─────────────────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--white);border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--gold)}
+.kpi-card.red{border-left-color:#dc2626}
+.kpi-card.blue{border-left-color:#2563eb}
+.kpi-card.yellow{border-left-color:#d97706}
+.kpi-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.kpi-value{font-size:36px;font-weight:700;color:var(--navy);line-height:1.2;margin-top:6px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--white);border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chart-card h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px}
+/* ── Table ───────────────────────────────────────────────── */
+.table-wrap{background:var(--white);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--navy);color:var(--white);padding:10px 14px;text-align:left;font-size:12px;font-weight:600;letter-spacing:.5px}
+td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+tr:last-child td{border-bottom:none}
+tr.clickable:hover td{background:#fafafa;cursor:pointer}
+/* ── Badges ──────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.b-new{background:#e5e7eb;color:#374151}
+.b-assigned,.b-in-progress{background:#dbeafe;color:#1d4ed8}
+.b-on-hold{background:#fef3c7;color:#92400e}
+.b-resolved,.b-closed{background:#dcfce7;color:#166534}
+.b-critical{background:#fee2e2;color:#991b1b}
+.b-high{background:#ffedd5;color:#9a3412}
+.b-moderate{background:#fef9c3;color:#713f12}
+.b-low{background:#dbeafe;color:#1e40af}
+.b-planning{background:#f3f4f6;color:#374151}
+/* ── Filters ─────────────────────────────────────────────── */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{border:1px solid var(--border);border-radius:6px;padding:7px 10px;background:var(--white);outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--navy)}
+.btn-sm{border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600}
+.btn-navy{background:var(--navy);color:var(--white)}
+.btn-navy:hover{background:#243060}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:#b8973a}
+.btn-outline{background:var(--white);color:var(--navy);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--navy)}
+/* ── Pagination ──────────────────────────────────────────── */
+.pagination{display:flex;align-items:center;gap:4px;margin-top:16px;justify-content:flex-end}
+.pagination button{border:1px solid var(--border);background:var(--white);border-radius:4px;padding:5px 10px;font-size:13px}
+.pagination button.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.pagination button:hover:not(.active):not([disabled]){background:var(--gray)}
+/* ── Stage bar ───────────────────────────────────────────── */
+.stage-bar{display:flex;margin-bottom:24px}
+.stage-step{flex:1;height:36px;display:flex;align-items:center;justify-content:center;background:#e5e7eb;color:var(--muted);font-size:11px;font-weight:700;position:relative;margin-right:2px;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%,12px 50%)}
+.stage-step:first-child{clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%)}
+.stage-step:last-child{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,12px 50%);margin-right:0}
+.stage-step.done{background:var(--gold);color:var(--navy)}
+.stage-step.active{background:var(--navy);color:var(--white)}
+/* ── Form ────────────────────────────────────────────────── */
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin-bottom:20px}
+.form-full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:6px;padding:8px 10px;background:var(--white);outline:none;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--navy)}
+.fg input.ro{background:#f9fafb;color:var(--muted)}
+.fg textarea{resize:vertical;min-height:80px}
+.form-actions{display:flex;gap:8px;margin-top:20px}
+/* ── Tabs ────────────────────────────────────────────────── */
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{background:transparent;border:none;padding:10px 20px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--gold)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+/* ── Notes / Activity ────────────────────────────────────── */
+.note-compose{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px}
+.note-compose textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;outline:none;resize:vertical;min-height:72px;margin-bottom:10px;background:var(--white)}
+.note-compose-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.note-compose-row label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.nc-push{flex:1}
+.activity-list{display:flex;flex-direction:column;gap:12px}
+.activity-item{display:flex;gap:12px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--navy);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.av.pub{background:var(--gold);color:var(--navy)}
+.activity-body{flex:1}
+.activity-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.activity-author{font-weight:700;font-size:13px}
+.activity-type{font-size:11px;color:var(--muted)}
+.activity-time{font-size:11px;color:var(--muted)}
+.activity-text{font-size:13px;color:#374151;line-height:1.6;white-space:pre-wrap}
+/* ── Detail ──────────────────────────────────────────────── */
+.detail-topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.detail-id{font-size:18px;font-weight:700;color:var(--navy)}
+.dp{flex:1}
+.card{background:var(--white);border-radius:10px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:20px}
+.on-hold-banner{background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:8px 14px;font-size:13px;color:#92400e;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+/* ── Portal ──────────────────────────────────────────────── */
+.portal-hero{background:var(--navy);padding:40px 48px;color:var(--white)}
+.portal-hero h1{font-size:24px;font-weight:700;margin-bottom:16px}
+.portal-search-bar{display:flex;background:var(--white);border-radius:8px;overflow:hidden;max-width:600px}
+.portal-search-bar input{flex:1;border:none;padding:12px 16px;font-size:14px;outline:none}
+.portal-search-bar button{background:var(--gold);border:none;padding:12px 20px;font-weight:700;color:var(--navy)}
+.portal-quicklinks{display:flex;gap:12px;margin-top:20px}
+.portal-ql{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px 16px;color:var(--white);font-size:13px;cursor:pointer}
+.portal-body{padding:32px 48px}
+.catalog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.catalog-card{background:var(--white);border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;transition:all .2s;border:2px solid transparent}
+.catalog-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.catalog-icon{font-size:28px;margin-bottom:10px}
+.catalog-name{font-weight:700;font-size:14px;color:var(--navy);margin-bottom:4px}
+.catalog-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.psec-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.my-inc-item{background:var(--white);border-radius:8px;padding:14px 18px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s}
+.my-inc-item:hover{background:#fafafa}
+.my-inc-id{font-weight:700;font-size:13px;color:var(--navy);min-width:110px}
+.my-inc-desc{flex:1;font-size:13px;color:#374151}
+.portal-form-wrap{max-width:640px;margin:0 auto;padding:32px 48px}
+.breadcrumb{font-size:12px;color:var(--muted);margin-bottom:20px}
+.breadcrumb span{cursor:pointer;color:var(--navy)}
+.breadcrumb span:hover{text-decoration:underline}
+/* ── Toast ───────────────────────────────────────────────── */
+#toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+.toast{background:#1f2937;color:var(--white);padding:12px 18px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.3);animation:tsIn .2s ease}
+.toast.success{background:#15803d}
+.toast.error{background:#b91c1c}
+@keyframes tsIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── Misc ────────────────────────────────────────────────── */
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div id="screen-login">
+  <div class="login-box">
+    <div class="login-logo">ITSM <span>Portal</span></div>
+    <p>サービスマネジメントポータル</p>
+    <div id="login-error">ユーザー名またはパスワードが正しくありません</div>
+    <label>ユーザー名</label>
+    <input id="inp-un" type="text" placeholder="admin / user" autocomplete="username">
+    <label>パスワード</label>
+    <input id="inp-pw" type="password" placeholder="パスワード" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- ════════════ APP ════════════ -->
+<div id="screen-app">
+
+  <!-- ── Header ── -->
+  <header id="app-header">
+    <div class="header-logo">ITSM <span>Portal</span></div>
+    <div class="hspace"></div>
+    <div class="view-toggle">
+      <button id="btn-vp" onclick="switchView('portal')">ポータル</button>
+      <button id="btn-va" onclick="switchView('admin')" class="active">管理画面</button>
+    </div>
+    <span class="header-user" id="hdr-uname"></span>
+    <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+  </header>
+
+  <!-- ════ ADMIN VIEW ════ -->
+  <div id="admin-view">
+    <nav id="sidebar">
+      <div class="sb-section">
+        <div class="sb-item active" id="nav-dashboard" onclick="showSection('dashboard')">
+          <span>📊</span><span>ITSMダッシュボード</span>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">インシデント管理</div>
+        <div class="sb-item" id="nav-incidents" onclick="showSection('incidents')">
+          <span>🚨</span><span>インシデント一覧</span>
+        </div>
+        <div class="sb-item" id="nav-newinc" onclick="showSection('newinc')">
+          <span>➕</span><span>新規インシデント</span>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">問題管理</div>
+        <div class="sb-item disabled"><span>🔍</span><span>問題一覧</span></div>
+        <div class="sb-item disabled"><span>➕</span><span>新規問題登録</span></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">変更管理</div>
+        <div class="sb-item disabled"><span>🔄</span><span>変更要求一覧</span></div>
+        <div class="sb-item disabled"><span>➕</span><span>新規変更要求</span></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">サービス要求</div>
+        <div class="sb-item disabled"><span>📋</span><span>サービス要求一覧</span></div>
+        <div class="sb-item disabled"><span>➕</span><span>新規サービス要求</span></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-title">管理</div>
+        <div class="sb-item disabled"><span>✅</span><span>承認一覧</span></div>
+      </div>
+    </nav>
+
+    <main id="admin-main">
+
+      <!-- Dashboard -->
+      <div id="sec-dashboard">
+        <div class="section-hd"><h2>📊 ITSMダッシュボード</h2></div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="chart-grid">
+          <div class="chart-card"><h3>優先度別インシデント</h3><canvas id="chart-priority" height="220"></canvas></div>
+          <div class="chart-card"><h3>週次トレンド（直近7日）</h3><canvas id="chart-trend" height="220"></canvas></div>
+        </div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">🔴 重大・未解決インシデント（上位5件）</div>
+          <div id="recent-open"></div>
+        </div>
+      </div>
+
+      <!-- Incident list -->
+      <div id="sec-incidents" style="display:none">
+        <div class="section-hd">
+          <h2>🚨 インシデント一覧</h2>
+          <button class="btn-sm btn-gold" onclick="showSection('newinc')">＋ 新規作成</button>
+        </div>
+        <div class="filter-bar">
+          <select id="flt-state" onchange="applyFilters()">
+            <option value="">全ステータス</option>
+            <option value="new">新規</option>
+            <option value="assigned">割当済</option>
+            <option value="in_progress">対応中</option>
+            <option value="on_hold">保留</option>
+            <option value="resolved">解決済</option>
+            <option value="closed">クローズ</option>
+          </select>
+          <select id="flt-priority" onchange="applyFilters()">
+            <option value="">全優先度</option>
+            <option value="1-critical">1-Critical</option>
+            <option value="2-high">2-High</option>
+            <option value="3-moderate">3-Moderate</option>
+            <option value="4-low">4-Low</option>
+            <option value="5-planning">5-Planning</option>
+          </select>
+          <select id="flt-catalog" onchange="applyFilters()"><option value="">全カタログ</option></select>
+          <input id="flt-q" placeholder="ID・件名で検索" style="min-width:180px" oninput="applyFilters()">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Number</th><th>Short description</th><th>Caller</th>
+                <th>Priority</th><th>State</th><th>Category</th>
+                <th>Assignment group</th><th>Assigned to</th><th>Opened</th>
+              </tr>
+            </thead>
+            <tbody id="inc-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="inc-pager"></div>
+      </div>
+
+      <!-- Incident detail -->
+      <div id="sec-detail" style="display:none">
+        <div class="detail-topbar">
+          <button class="btn-sm btn-outline" onclick="showSection('incidents')">← 一覧</button>
+          <span class="detail-id" id="det-id"></span>
+          <span id="det-state-badge"></span>
+          <div class="dp"></div>
+          <button class="btn-sm btn-gold" onclick="updateIncident()">Update</button>
+        </div>
+        <div id="det-hold-banner" class="on-hold-banner" style="display:none">⏸ このインシデントは保留中です</div>
+        <div id="det-stage" class="stage-bar"></div>
+        <div class="card"><div class="form-2col" id="det-form"></div></div>
+        <div class="card" style="padding-bottom:0">
+          <div class="tab-bar">
+            <button class="tab-btn active" id="tbtn-notes" onclick="showTab('notes')">Notes</button>
+            <button class="tab-btn" id="tbtn-related" onclick="showTab('related')">Related Records</button>
+            <button class="tab-btn" id="tbtn-resolution" onclick="showTab('resolution')">Resolution Information</button>
+          </div>
+          <div class="tab-panel active" id="tp-notes" style="padding-bottom:24px">
+            <div class="note-compose">
+              <textarea id="note-body" placeholder="Work notesを入力..."></textarea>
+              <div class="note-compose-row">
+                <label><input type="checkbox" id="note-pub"> Comments (Customer visible)</label>
+                <div class="nc-push"></div>
+                <button class="btn-sm btn-navy" onclick="postNote()">Post</button>
+              </div>
+            </div>
+            <div class="activity-list" id="activity-list"></div>
+          </div>
+          <div class="tab-panel" id="tp-related" style="padding:16px 0 24px">
+            <div class="empty">関連レコードはありません（フェーズ2実装予定）</div>
+          </div>
+          <div class="tab-panel" id="tp-resolution" style="padding-bottom:24px">
+            <div class="form-2col" id="res-form"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New incident -->
+      <div id="sec-newinc" style="display:none">
+        <div class="section-hd">
+          <button class="btn-sm btn-outline" onclick="showSection('incidents')" style="margin-right:8px">← 戻る</button>
+          <h2>➕ 新規インシデント</h2>
+        </div>
+        <div class="card">
+          <div class="form-2col" id="ni-form"></div>
+          <div class="form-actions">
+            <button class="btn-sm btn-navy" onclick="submitNewIncident()">作成</button>
+            <button class="btn-sm btn-outline" onclick="showSection('incidents')">キャンセル</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ════ PORTAL VIEW ════ -->
+  <div id="portal-view">
+
+    <!-- Top -->
+    <div id="sec-ptop">
+      <div class="portal-hero">
+        <h1>どのようなご用件ですか？</h1>
+        <div class="portal-search-bar">
+          <input type="text" placeholder="カタログを検索...">
+          <button>🔍</button>
+        </div>
+        <div class="portal-quicklinks">
+          <div class="portal-ql">📋 リクエスト申請</div>
+          <div class="portal-ql">📚 ナレッジ</div>
+          <div class="portal-ql">🆘 ヘルプ</div>
+        </div>
+      </div>
+      <div class="portal-body">
+        <div class="psec-title">サービスカタログ</div>
+        <div class="catalog-grid" id="catalog-grid"></div>
+        <div class="psec-title">マイ オープンインシデント</div>
+        <div id="my-inc-list"></div>
+      </div>
+    </div>
+
+    <!-- Portal create -->
+    <div id="sec-pcreate" style="display:none">
+      <div class="portal-form-wrap">
+        <div class="breadcrumb">
+          <span onclick="showPortal('top')">ホーム</span> &rsaquo;
+          <span onclick="showPortal('top')">サービスカタログ</span> &rsaquo;
+          <span id="pcreate-catname"></span>
+        </div>
+        <div style="font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px" id="pcreate-title"></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px">担当チームに自動的に割り当てられます</div>
+        <div class="fg" style="margin-bottom:16px">
+          <label>Urgency（緊急度）</label>
+          <select id="p-urgency">
+            <option value="2-high">1 - High（緊急）</option>
+            <option value="3-medium" selected>2 - Medium（通常）</option>
+            <option value="4-low">3 - Low（低）</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:16px">
+          <label>件名 *</label>
+          <input type="text" id="p-shortdesc" placeholder="問題を一言で説明してください">
+        </div>
+        <div class="fg" style="margin-bottom:24px">
+          <label>詳細説明</label>
+          <textarea id="p-desc" rows="4" placeholder="症状・発生日時・影響範囲などを記載してください"></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-sm btn-navy" onclick="submitPortalCreate()">送信</button>
+          <button class="btn-sm btn-outline" onclick="showPortal('top')">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Portal detail -->
+    <div id="sec-pdetail" style="display:none">
+      <div class="portal-form-wrap" style="max-width:720px">
+        <div class="breadcrumb">
+          <span onclick="showPortal('top')">ホーム</span> &rsaquo; マイリクエスト
+        </div>
+        <div class="detail-topbar" style="margin-bottom:12px">
+          <span class="detail-id" id="pd-id"></span>
+          <span id="pd-badge"></span>
+          <div class="dp"></div>
+          <button class="btn-sm btn-outline" onclick="showPortal('top')">← 戻る</button>
+        </div>
+        <div id="pd-stage" class="stage-bar"></div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="pd-catalog"></div>
+          <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px" id="pd-desc"></div>
+          <div style="font-size:12px;color:var(--muted)" id="pd-meta"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">Activity</div>
+          <div class="activity-list" id="pd-activity" style="margin-bottom:16px"></div>
+          <textarea id="pd-comment" rows="3" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;outline:none;resize:vertical" placeholder="コメントを入力..."></textarea>
+          <div style="margin-top:8px;text-align:right">
+            <button class="btn-sm btn-navy" onclick="postPortalComment()">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /portal-view -->
+
+  <div id="toast-wrap"></div>
+
+</div><!-- /screen-app -->
+
+<script>
+/* ═══════════════ STATE ═══════════════ */
+var _token = null;
+var _user  = null;
+var _view  = 'admin';
+var _curSection = 'dashboard';
+var _curInc = null;
+var _incPage = 1;
+var _portalCatId = null;
+var _portalDetId = null;
+var _cache = { groups:null, catalogs:null, users:null };
+var _chartPri = null;
+var _chartTrend = null;
+
+/* ═══════════════ API ═══════════════ */
+function apiFetch(path, method, body) {
+  var opts = { method: method || 'GET', headers: {} };
+  if (_token) opts.headers['Authorization'] = 'Bearer ' + _token;
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  return fetch('/api/itsm' + path, opts).then(function(r) {
+    if (r.status === 401) { doLogout(); return Promise.reject('Unauthorized'); }
+    if (!r.ok) {
+      return r.json().then(function(d) { return Promise.reject(d.detail || 'Error'); });
+    }
+    if (r.status === 204) return null;
+    return r.json();
+  });
+}
+function apiGet(p) { return apiFetch(p, 'GET'); }
+function apiPost(p, b) { return apiFetch(p, 'POST', b); }
+function apiPatch(p, b) { return apiFetch(p, 'PATCH', b); }
+
+function loadCache() {
+  return Promise.all([
+    apiGet('/groups').then(function(d) { _cache.groups = d; }),
+    apiGet('/portal/catalogs').then(function(d) { _cache.catalogs = d; }),
+    apiGet('/users').then(function(d) { _cache.users = d; })
+  ]);
+}
+
+/* ═══════════════ AUTH ═══════════════ */
+function doLogin() {
+  var u = document.getElementById('inp-un').value.trim();
+  var p = document.getElementById('inp-pw').value;
+  if (!u || !p) return;
+  apiPost('/auth/login', { username: u, password: p })
+    .then(function(d) {
+      _token = d.access_token;
+      _user  = d;
+      document.getElementById('hdr-uname').textContent = d.full_name;
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('screen-login').style.display = 'none';
+      document.getElementById('screen-app').style.display = 'block';
+      return loadCache();
+    })
+    .then(function() {
+      fillCatalogFilter();
+      switchView('admin');
+      showSection('dashboard');
+    })
+    .catch(function() {
+      document.getElementById('login-error').style.display = 'block';
+    });
+}
+
+function doLogout() {
+  _token = null; _user = null;
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('inp-pw').value = '';
+}
+
+/* ═══════════════ NAVIGATION ═══════════════ */
+function switchView(v) {
+  _view = v;
+  document.getElementById('admin-view').style.display  = v === 'admin'  ? 'flex'  : 'none';
+  document.getElementById('portal-view').style.display = v === 'portal' ? 'block' : 'none';
+  document.getElementById('btn-va').className = v === 'admin'  ? 'active' : '';
+  document.getElementById('btn-vp').className = v === 'portal' ? 'active' : '';
+  if (v === 'portal') showPortal('top');
+}
+
+var _adminSections = ['dashboard', 'incidents', 'detail', 'newinc'];
+function showSection(name) {
+  for (var i = 0; i < _adminSections.length; i++) {
+    var el = document.getElementById('sec-' + _adminSections[i]);
+    if (el) el.style.display = _adminSections[i] === name ? 'block' : 'none';
+  }
+  var navItems = ['dashboard', 'incidents', 'newinc'];
+  for (var j = 0; j < navItems.length; j++) {
+    var n = document.getElementById('nav-' + navItems[j]);
+    if (n) n.className = 'sb-item' + (navItems[j] === name ? ' active' : '');
+  }
+  _curSection = name;
+  if (name === 'dashboard')  loadDashboard();
+  if (name === 'incidents') { _incPage = 1; loadIncidents(); }
+  if (name === 'newinc')    renderNewIncForm();
+}
+
+var _portalSections = ['ptop', 'pcreate', 'pdetail'];
+function showPortal(name) {
+  var id = 'sec-p' + name;
+  for (var i = 0; i < _portalSections.length; i++) {
+    var el = document.getElementById('sec-p' + _portalSections[i].replace('p',''));
+    if (el) el.style.display = 'none';
+  }
+  // map shortnames
+  var map = { top:'ptop', create:'pcreate', detail:'pdetail' };
+  var target = document.getElementById('sec-' + (map[name] || name));
+  if (target) target.style.display = 'block';
+  if (name === 'top') loadPortalTop();
+}
+
+/* ═══════════════ BADGES & HELPERS ═══════════════ */
+function stateBadge(s) {
+  var cls = {new:'b-new', assigned:'b-assigned', in_progress:'b-in-progress',
+             on_hold:'b-on-hold', resolved:'b-resolved', closed:'b-closed'};
+  var lbl = {new:'新規', assigned:'割当済', in_progress:'対応中',
+             on_hold:'保留', resolved:'解決済', closed:'クローズ'};
+  return '<span class="badge ' + (cls[s] || 'b-new') + '">' + (lbl[s] || s) + '</span>';
+}
+function prioBadge(p) {
+  var cls = {'1-critical':'b-critical','2-high':'b-high','3-moderate':'b-moderate',
+             '4-low':'b-low','5-planning':'b-planning'};
+  return '<span class="badge ' + (cls[p] || 'b-planning') + '">' + (p || '-') + '</span>';
+}
+function fmtDt(s) {
+  if (!s) return '-';
+  return s.replace('T',' ').slice(0,16);
+}
+function initials(name) {
+  if (!name) return '?';
+  var parts = name.split(' ');
+  if (parts.length >= 2) return parts[0].slice(0,1) + parts[1].slice(0,1);
+  return name.slice(0,2);
+}
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function stageBar(state, elId) {
+  var stages = ['New','Assigned','In Progress','Resolved','Closed'];
+  var idx = {new:0, assigned:1, in_progress:2, on_hold:2, resolved:3, closed:4};
+  var cur = idx[state] !== undefined ? idx[state] : 0;
+  var html = '';
+  for (var i = 0; i < stages.length; i++) {
+    var cls = 'stage-step';
+    if (i < cur) cls += ' done';
+    else if (i === cur) cls += ' active';
+    html += '<div class="' + cls + '">' + stages[i] + '</div>';
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+function fillCatalogFilter() {
+  var sel = document.getElementById('flt-catalog');
+  if (!sel || !_cache.catalogs) return;
+  var html = '<option value="">全カタログ</option>';
+  for (var i = 0; i < _cache.catalogs.length; i++) {
+    var c = _cache.catalogs[i];
+    html += '<option value="' + c.catalog_id + '">' + c.icon + ' ' + c.name + '</option>';
+  }
+  sel.innerHTML = html;
+}
+
+function mkSelect(id, opts, selected, labels) {
+  var html = '<select id="' + id + '">';
+  for (var i = 0; i < opts.length; i++) {
+    var v = opts[i];
+    var lbl = labels ? (labels[v] !== undefined ? labels[v] : v) : v;
+    var s = (v === selected || v == selected) ? ' selected' : '';
+    html += '<option value="' + v + '"' + s + '>' + lbl + '</option>';
+  }
+  return html + '</select>';
+}
+
+function groupOptHtml(selId) {
+  var html = '<option value="">-- 未割当 --</option>';
+  if (!_cache.groups) return html;
+  for (var i = 0; i < _cache.groups.length; i++) {
+    var g = _cache.groups[i];
+    var s = g.group_id == selId ? ' selected' : '';
+    html += '<option value="' + g.group_id + '"' + s + '>' + g.name + '</option>';
+  }
+  return html;
+}
+function catalogOptHtml(selId) {
+  var html = '<option value="">-- 選択 --</option>';
+  if (!_cache.catalogs) return html;
+  for (var i = 0; i < _cache.catalogs.length; i++) {
+    var c = _cache.catalogs[i];
+    var s = c.catalog_id == selId ? ' selected' : '';
+    html += '<option value="' + c.catalog_id + '"' + s + '>' + c.icon + ' ' + c.name + '</option>';
+  }
+  return html;
+}
+function userOptHtml(users, selId) {
+  var html = '<option value="">-- 未割当 --</option>';
+  if (!users) return html;
+  for (var i = 0; i < users.length; i++) {
+    var u = users[i];
+    var s = u.user_id == selId ? ' selected' : '';
+    html += '<option value="' + u.user_id + '"' + s + '>' + u.full_name + '</option>';
+  }
+  return html;
+}
+function callerOptHtml(selId) {
+  var html = '<option value="">-- 未設定 --</option>';
+  if (!_cache.users) return html;
+  for (var i = 0; i < _cache.users.length; i++) {
+    var u = _cache.users[i];
+    var s = u.user_id == selId ? ' selected' : '';
+    html += '<option value="' + u.user_id + '"' + s + '>' + u.full_name + '</option>';
+  }
+  return html;
+}
+
+function fg(label, inputHtml, full) {
+  return '<div class="fg' + (full ? ' form-full' : '') + '"><label>' + label + '</label>' + inputHtml + '</div>';
+}
+
+var PRIORITY_MATRIX = {
+  '1-enterprise,1-critical':'1-critical','1-enterprise,2-high':'1-critical',
+  '1-enterprise,3-medium':'2-high','1-enterprise,4-low':'2-high',
+  '2-site,1-critical':'1-critical','2-site,2-high':'2-high',
+  '2-site,3-medium':'3-moderate','2-site,4-low':'3-moderate',
+  '3-department,1-critical':'2-high','3-department,2-high':'3-moderate',
+  '3-department,3-medium':'3-moderate','3-department,4-low':'4-low',
+  '4-user,1-critical':'3-moderate','4-user,2-high':'3-moderate',
+  '4-user,3-medium':'4-low','4-user,4-low':'5-planning'
+};
+
+/* ═══════════════ DASHBOARD ═══════════════ */
+function loadDashboard() {
+  apiGet('/dashboard').then(function(d) {
+    renderKPIs(d.kpi);
+    renderPrioChart(d.by_priority);
+    renderTrendChart(d.weekly_trend);
+    renderRecentOpen(d.recent_open);
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+function renderKPIs(kpi) {
+  var items = [
+    { label:'オープン件数', value:kpi.open_count, cls:'', icon:'📋' },
+    { label:'重大インシデント', value:kpi.critical_count, cls:'red', icon:'🔴' },
+    { label:'保留中', value:kpi.on_hold_count, cls:'yellow', icon:'⏸' },
+    { label:'本日の新規', value:kpi.today_count, cls:'blue', icon:'📅' }
+  ];
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    html += '<div class="kpi-card ' + it.cls + '">';
+    html += '<div class="kpi-label">' + it.icon + ' ' + it.label + '</div>';
+    html += '<div class="kpi-value">' + it.value + '</div>';
+    html += '</div>';
+  }
+  document.getElementById('kpi-grid').innerHTML = html;
+}
+
+function renderPrioChart(data) {
+  var labels = [], vals = [], colors = [];
+  var cmap = {
+    '1-critical':'rgba(220,38,38,.8)', '2-high':'rgba(234,88,12,.8)',
+    '3-moderate':'rgba(202,138,4,.8)', '4-low':'rgba(37,99,235,.8)',
+    '5-planning':'rgba(107,114,128,.8)'
+  };
+  for (var i = 0; i < data.length; i++) {
+    labels.push(data[i].priority);
+    vals.push(data[i].count);
+    colors.push(cmap[data[i].priority] || 'rgba(107,114,128,.8)');
+  }
+  var ctx = document.getElementById('chart-priority').getContext('2d');
+  if (_chartPri) _chartPri.destroy();
+  _chartPri = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:labels, datasets:[{ data:vals, backgroundColor:colors, borderRadius:4 }] },
+    options:{ plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{stepSize:1}} } }
+  });
+}
+
+function renderTrendChart(data) {
+  var labels = [], vals = [];
+  for (var i = 0; i < data.length; i++) {
+    labels.push(data[i].date.slice(5));
+    vals.push(data[i].count);
+  }
+  var ctx = document.getElementById('chart-trend').getContext('2d');
+  if (_chartTrend) _chartTrend.destroy();
+  _chartTrend = new Chart(ctx, {
+    type:'line',
+    data:{ labels:labels, datasets:[{
+      data:vals, borderColor:'#1a2340',
+      backgroundColor:'rgba(26,35,64,.1)',
+      fill:true, tension:.3,
+      pointBackgroundColor:'#c9a84c'
+    }] },
+    options:{ plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{stepSize:1}} } }
+  });
+}
+
+function renderRecentOpen(items) {
+  var el = document.getElementById('recent-open');
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div class="empty">未解決の重大インシデントはありません</div>';
+    return;
+  }
+  var html = '<table style="width:100%"><thead><tr><th>Number</th><th>Short description</th><th>Priority</th><th>State</th><th>Caller</th><th>Catalog</th></tr></thead><tbody>';
+  for (var i = 0; i < items.length; i++) {
+    var r = items[i];
+    html += '<tr class="clickable" onclick="openDetail(\'' + r.incident_id + '\')">';
+    html += '<td style="font-weight:700;color:var(--navy)">' + r.incident_id + '</td>';
+    html += '<td>' + esc(r.short_description) + '</td>';
+    html += '<td>' + prioBadge(r.priority) + '</td>';
+    html += '<td>' + stateBadge(r.state) + '</td>';
+    html += '<td>' + esc(r.caller_name || '-') + '</td>';
+    html += '<td>' + esc(r.catalog_name || '-') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+/* ═══════════════ INCIDENT LIST ═══════════════ */
+function applyFilters() { _incPage = 1; loadIncidents(); }
+
+function loadIncidents() {
+  var state    = document.getElementById('flt-state').value;
+  var priority = document.getElementById('flt-priority').value;
+  var catalog  = document.getElementById('flt-catalog').value;
+  var q        = document.getElementById('flt-q').value;
+  var params   = '?page=' + _incPage;
+  if (state)    params += '&state='              + encodeURIComponent(state);
+  if (priority) params += '&priority='           + encodeURIComponent(priority);
+  if (catalog)  params += '&service_catalog_id=' + catalog;
+  if (q)        params += '&q='                  + encodeURIComponent(q);
+
+  apiGet('/incidents' + params).then(function(d) {
+    renderIncTable(d.items);
+    renderPager(d.total, d.page, d.pages);
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+function renderIncTable(items) {
+  if (!items || !items.length) {
+    document.getElementById('inc-tbody').innerHTML = '<tr><td colspan="9" class="empty">該当するインシデントがありません</td></tr>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var r = items[i];
+    html += '<tr class="clickable" onclick="openDetail(\'' + r.incident_id + '\')">';
+    html += '<td style="font-weight:700;color:var(--navy)">' + r.incident_id + '</td>';
+    html += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.short_description) + '</td>';
+    html += '<td>' + esc(r.caller_name || '-') + '</td>';
+    html += '<td>' + prioBadge(r.priority) + '</td>';
+    html += '<td>' + stateBadge(r.state) + '</td>';
+    html += '<td>' + (r.category || '-') + '</td>';
+    html += '<td>' + esc(r.group_name || '-') + '</td>';
+    html += '<td>' + esc(r.assigned_name || '-') + '</td>';
+    html += '<td style="white-space:nowrap">' + fmtDt(r.opened_at) + '</td>';
+    html += '</tr>';
+  }
+  document.getElementById('inc-tbody').innerHTML = html;
+}
+
+function renderPager(total, page, pages) {
+  var html = '<span style="font-size:13px;color:var(--muted);margin-right:8px">全' + total + '件</span>';
+  if (pages > 1) {
+    html += '<button onclick="changePage(' + (page-1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>‹</button>';
+    var s = Math.max(1, page-2), e = Math.min(pages, page+2);
+    for (var i = s; i <= e; i++) {
+      html += '<button class="' + (i === page ? 'active' : '') + '" onclick="changePage(' + i + ')">' + i + '</button>';
+    }
+    html += '<button onclick="changePage(' + (page+1) + ')" ' + (page >= pages ? 'disabled' : '') + '>›</button>';
+  }
+  document.getElementById('inc-pager').innerHTML = html;
+}
+
+function changePage(p) { _incPage = p; loadIncidents(); }
+
+function openDetail(id) {
+  _curInc = id;
+  showSection('detail');
+  loadDetail(id);
+}
+
+/* ═══════════════ INCIDENT DETAIL ═══════════════ */
+function loadDetail(id) {
+  apiGet('/incidents/' + id).then(function(inc) {
+    renderDetailHeader(inc);
+    renderDetailForm(inc);
+    renderResolutionForm(inc);
+    loadNotes(id);
+    showTab('notes');
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+function renderDetailHeader(inc) {
+  document.getElementById('det-id').textContent         = inc.incident_id;
+  document.getElementById('det-state-badge').innerHTML  = stateBadge(inc.state);
+  document.getElementById('det-hold-banner').style.display = inc.state === 'on_hold' ? 'flex' : 'none';
+  stageBar(inc.state, 'det-stage');
+}
+
+var STATE_LABELS = { new:'新規 (New)', assigned:'割当済 (Assigned)', in_progress:'対応中 (In Progress)',
+                     on_hold:'保留 (On Hold)', resolved:'解決済 (Resolved)', closed:'クローズ (Closed)' };
+
+function renderDetailForm(inc) {
+  var html = '';
+  html += fg('Number',  '<input class="ro" readonly value="' + esc(inc.incident_id) + '">');
+  html += fg('Channel', mkSelect('det-channel', ['portal','email','phone','walk-in'], inc.channel));
+  html += fg('Caller',  '<select id="det-caller">' + callerOptHtml(inc.caller_user_id) + '</select>');
+  html += fg('State',   mkSelect('det-state', ['new','assigned','in_progress','on_hold','resolved','closed'], inc.state, STATE_LABELS));
+  html += fg('Category', mkSelect('det-cat', ['','inquiry','software','hardware','network','security'], inc.category || ''));
+  html += fg('Impact',   mkSelect('det-impact', ['1-enterprise','2-site','3-department','4-user'], inc.impact));
+  html += fg('Subcategory', '<input id="det-sub" value="' + esc(inc.subcategory || '') + '">');
+  html += fg('Urgency',  mkSelect('det-urgency', ['1-critical','2-high','3-medium','4-low'], inc.urgency));
+  html += fg('Service catalog', '<select id="det-catalog" onchange="onDetCatalogChange(this.value)">' + catalogOptHtml(inc.service_catalog_id) + '</select>');
+  html += fg('Priority', '<input class="ro" readonly id="det-prio" value="' + esc(inc.priority || '') + '">');
+  html += fg('Assignment group', '<select id="det-group" onchange="onDetGroupChange(this.value)">' + groupOptHtml(inc.assigned_group_id) + '</select>');
+  html += fg('Assigned to', '<select id="det-user"><option value="">-- 未割当 --</option></select>');
+  html += fg('Short description', '<input id="det-short" value="' + esc(inc.short_description) + '">', true);
+  html += fg('Description', '<textarea id="det-desc" rows="4">' + esc(inc.description || '') + '</textarea>', true);
+  document.getElementById('det-form').innerHTML = html;
+
+  if (inc.assigned_group_id) loadGroupMembers(inc.assigned_group_id, inc.assigned_user_id);
+  document.getElementById('det-impact').addEventListener('change', function() {
+    recalcPrio('det-impact', 'det-urgency', 'det-prio');
+  });
+  document.getElementById('det-urgency').addEventListener('change', function() {
+    recalcPrio('det-impact', 'det-urgency', 'det-prio');
+  });
+}
+
+function renderResolutionForm(inc) {
+  var html = '';
+  html += fg('Resolution code', mkSelect('res-code', ['','solved','workaround','not_reproduced','no_resolution_required'], inc.resolution_code || ''));
+  html += fg('Resolved at', '<input class="ro" readonly value="' + fmtDt(inc.resolved_at) + '">');
+  html += fg('Resolution notes', '<textarea id="res-notes" rows="4">' + esc(inc.resolution_notes || '') + '</textarea>', true);
+  html += fg('Closed at', '<input class="ro" readonly value="' + fmtDt(inc.closed_at) + '">');
+  document.getElementById('res-form').innerHTML = html;
+}
+
+function onDetCatalogChange(catId) {
+  if (!catId || !_cache.groups) return;
+  for (var i = 0; i < _cache.groups.length; i++) {
+    if (_cache.groups[i].catalog_id == catId) {
+      var gEl = document.getElementById('det-group');
+      gEl.value = _cache.groups[i].group_id;
+      loadGroupMembers(_cache.groups[i].group_id, null);
+      break;
+    }
+  }
+}
+function onDetGroupChange(gid) { loadGroupMembers(gid, null); }
+
+function loadGroupMembers(gid, selUserId) {
+  if (!gid) {
+    document.getElementById('det-user').innerHTML = '<option value="">-- 未割当 --</option>';
+    return;
+  }
+  apiGet('/groups/' + gid + '/members').then(function(members) {
+    document.getElementById('det-user').innerHTML = userOptHtml(members, selUserId);
+  });
+}
+
+function recalcPrio(impactId, urgencyId, prioId) {
+  var imp = document.getElementById(impactId).value;
+  var urg = document.getElementById(urgencyId).value;
+  var p = PRIORITY_MATRIX[imp + ',' + urg] || '3-moderate';
+  document.getElementById(prioId).value = p;
+}
+
+function updateIncident() {
+  if (!_curInc) return;
+  var body = {
+    short_description: document.getElementById('det-short').value,
+    description:       document.getElementById('det-desc').value,
+    state:             document.getElementById('det-state').value,
+    category:          document.getElementById('det-cat').value || null,
+    subcategory:       document.getElementById('det-sub').value || null,
+    channel:           document.getElementById('det-channel').value,
+    impact:            document.getElementById('det-impact').value,
+    urgency:           document.getElementById('det-urgency').value
+  };
+  var rCode  = document.getElementById('res-code');
+  var rNotes = document.getElementById('res-notes');
+  if (rCode)  body.resolution_code  = rCode.value || null;
+  if (rNotes) body.resolution_notes = rNotes.value || null;
+
+  var callerEl = document.getElementById('det-caller');
+  if (callerEl && callerEl.value) body.caller_user_id = parseInt(callerEl.value);
+
+  var groupEl = document.getElementById('det-group');
+  if (groupEl) body.assigned_group_id = groupEl.value ? parseInt(groupEl.value) : null;
+
+  var userEl = document.getElementById('det-user');
+  if (userEl) body.assigned_user_id = userEl.value ? parseInt(userEl.value) : null;
+
+  var catEl = document.getElementById('det-catalog');
+  if (catEl && catEl.value) body.service_catalog_id = parseInt(catEl.value);
+
+  apiPatch('/incidents/' + _curInc, body)
+    .then(function(d) {
+      showToast('更新しました', 'success');
+      renderDetailHeader(d);
+    })
+    .catch(function(e) { showToast(String(e), 'error'); });
+}
+
+/* ═══════════════ TABS ═══════════════ */
+function showTab(name) {
+  var tabs = ['notes','related','resolution'];
+  for (var i = 0; i < tabs.length; i++) {
+    var tp  = document.getElementById('tp-' + tabs[i]);
+    var btn = document.getElementById('tbtn-' + tabs[i]);
+    if (tp)  tp.className  = 'tab-panel' + (tabs[i] === name ? ' active' : '');
+    if (btn) btn.className = 'tab-btn'   + (tabs[i] === name ? ' active' : '');
+  }
+  if (name === 'notes' && _curInc) loadNotes(_curInc);
+}
+
+/* ═══════════════ NOTES ═══════════════ */
+function loadNotes(id) {
+  apiGet('/incidents/' + id + '/notes').then(function(notes) {
+    renderActivity(notes, 'activity-list');
+  });
+}
+
+function renderActivity(notes, containerId) {
+  if (!notes || !notes.length) {
+    document.getElementById(containerId).innerHTML = '<div class="empty">履歴はありません</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < notes.length; i++) {
+    var n = notes[i];
+    var isPub = n.note_type === 'public_comment';
+    html += '<div class="activity-item">';
+    html += '<div class="av' + (isPub ? ' pub' : '') + '">' + initials(n.author_name || '?') + '</div>';
+    html += '<div class="activity-body">';
+    html += '<div class="activity-meta">';
+    html += '<span class="activity-author">' + esc(n.author_name || '不明') + '</span>';
+    html += '<span class="activity-type">' + (isPub ? 'Customer visible' : 'Work note') + '</span>';
+    html += '<span class="activity-time">' + fmtDt(n.created_at) + '</span>';
+    html += '</div>';
+    html += '<div class="activity-text">' + esc(n.body) + '</div>';
+    html += '</div></div>';
+  }
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function postNote() {
+  var body = document.getElementById('note-body').value.trim();
+  if (!body || !_curInc) return;
+  var isPub = document.getElementById('note-pub').checked;
+  apiPost('/incidents/' + _curInc + '/notes', {
+    body: body,
+    note_type: isPub ? 'public_comment' : 'work_note'
+  }).then(function() {
+    document.getElementById('note-body').value = '';
+    document.getElementById('note-pub').checked = false;
+    loadNotes(_curInc);
+    showToast('投稿しました', 'success');
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+/* ═══════════════ NEW INCIDENT ═══════════════ */
+function renderNewIncForm() {
+  var callerOpts = '<option value="">-- 選択 --</option>';
+  if (_cache.users) {
+    for (var i = 0; i < _cache.users.length; i++) {
+      var u = _cache.users[i];
+      callerOpts += '<option value="' + u.user_id + '">' + u.full_name + ' (' + u.username + ')</option>';
+    }
+  }
+  var html = '';
+  html += fg('Service catalog *', '<select id="ni-cat" onchange="niCatChange(this.value)">' + catalogOptHtml(null) + '</select>');
+  html += fg('Channel', mkSelect('ni-channel', ['portal','email','phone','walk-in'], 'portal'));
+  html += fg('Caller *', '<select id="ni-caller">' + callerOpts + '</select>');
+  html += fg('State', mkSelect('ni-state', ['new','assigned','in_progress'], 'new', STATE_LABELS));
+  html += fg('Category', mkSelect('ni-cat2', ['','inquiry','software','hardware','network','security'], ''));
+  html += fg('Impact', mkSelect('ni-impact', ['1-enterprise','2-site','3-department','4-user'], '3-department'));
+  html += fg('Subcategory', '<input id="ni-sub" placeholder="サブカテゴリ">');
+  html += fg('Urgency', mkSelect('ni-urgency', ['1-critical','2-high','3-medium','4-low'], '3-medium'));
+  html += fg('Assignment group', '<select id="ni-group">' + groupOptHtml(null) + '</select>');
+  html += fg('Assigned to', '<select id="ni-user"><option value="">-- 未割当 --</option></select>');
+  html += fg('Short description *', '<input id="ni-short" placeholder="件名を入力してください">', true);
+  html += fg('Description', '<textarea id="ni-desc" rows="4" placeholder="詳細説明"></textarea>', true);
+  document.getElementById('ni-form').innerHTML = html;
+
+  document.getElementById('ni-group').addEventListener('change', function() {
+    var gid = this.value;
+    if (!gid) return;
+    apiGet('/groups/' + gid + '/members').then(function(m) {
+      document.getElementById('ni-user').innerHTML = userOptHtml(m, null);
+    });
+  });
+}
+
+function niCatChange(catId) {
+  if (!catId || !_cache.groups) return;
+  for (var i = 0; i < _cache.groups.length; i++) {
+    if (_cache.groups[i].catalog_id == catId) {
+      document.getElementById('ni-group').value = _cache.groups[i].group_id;
+      var gid = _cache.groups[i].group_id;
+      apiGet('/groups/' + gid + '/members').then(function(m) {
+        document.getElementById('ni-user').innerHTML = userOptHtml(m, null);
+      });
+      break;
+    }
+  }
+}
+
+function submitNewIncident() {
+  var short   = document.getElementById('ni-short').value.trim();
+  var catId   = document.getElementById('ni-cat').value;
+  var urgency = document.getElementById('ni-urgency').value;
+  var caller  = document.getElementById('ni-caller').value;
+  if (!short)  { showToast('件名は必須です', 'error'); return; }
+  if (!catId)  { showToast('サービスカタログを選択してください', 'error'); return; }
+  if (!caller) { showToast('Callerを選択してください', 'error'); return; }
+
+  var body = {
+    short_description:  short,
+    service_catalog_id: parseInt(catId),
+    urgency:            urgency,
+    impact:             document.getElementById('ni-impact').value,
+    description:        document.getElementById('ni-desc').value || null,
+    category:           document.getElementById('ni-cat2').value || null,
+    subcategory:        document.getElementById('ni-sub').value  || null,
+    channel:            document.getElementById('ni-channel').value,
+    caller_user_id:     parseInt(caller)
+  };
+  var uid = document.getElementById('ni-user').value;
+  if (uid) body.assigned_user_id = parseInt(uid);
+
+  apiPost('/incidents', body).then(function(d) {
+    showToast('作成しました: ' + d.incident_id, 'success');
+    _curInc = d.incident_id;
+    showSection('detail');
+    loadDetail(d.incident_id);
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+/* ═══════════════ PORTAL TOP ═══════════════ */
+function loadPortalTop() {
+  if (_cache.catalogs) renderCatalogGrid(_cache.catalogs);
+  apiGet('/portal/my-incidents').then(function(incs) {
+    renderMyInc(incs);
+  });
+}
+
+function renderCatalogGrid(cats) {
+  var html = '';
+  for (var i = 0; i < cats.length; i++) {
+    var c = cats[i];
+    html += '<div class="catalog-card" onclick="openPortalCreate(' + c.catalog_id + ',\'' + esc(c.name) + '\')">';
+    html += '<div class="catalog-icon">' + c.icon + '</div>';
+    html += '<div class="catalog-name">' + esc(c.name) + '</div>';
+    html += '<div class="catalog-desc">' + esc(c.description || '') + '</div>';
+    html += '</div>';
+  }
+  document.getElementById('catalog-grid').innerHTML = html;
+}
+
+function renderMyInc(incs) {
+  var el = document.getElementById('my-inc-list');
+  if (!incs || !incs.length) {
+    el.innerHTML = '<div class="empty">オープンなインシデントはありません</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < incs.length; i++) {
+    var r = incs[i];
+    html += '<div class="my-inc-item" onclick="openPortalDetail(\'' + r.incident_id + '\')">';
+    html += '<span class="my-inc-id">' + r.incident_id + '</span>';
+    html += '<span class="my-inc-desc">' + esc(r.short_description) + '</span>';
+    html += stateBadge(r.state);
+    html += '<span style="font-size:12px;color:var(--muted);margin-left:8px">' + (r.catalog_icon || '') + ' ' + esc(r.catalog_name || '') + '</span>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+/* ═══════════════ PORTAL CREATE ═══════════════ */
+function openPortalCreate(catId, catName) {
+  _portalCatId = catId;
+  document.getElementById('pcreate-catname').textContent = catName;
+  document.getElementById('pcreate-title').textContent   = catName + ' へのお問い合わせ';
+  document.getElementById('p-shortdesc').value = '';
+  document.getElementById('p-desc').value      = '';
+  document.getElementById('p-urgency').value   = '3-medium';
+  showPortal('create');
+}
+
+function submitPortalCreate() {
+  var short   = document.getElementById('p-shortdesc').value.trim();
+  var urgency = document.getElementById('p-urgency').value;
+  if (!short) { showToast('件名は必須です', 'error'); return; }
+  apiPost('/portal/incidents', {
+    service_catalog_id: _portalCatId,
+    urgency:            urgency,
+    short_description:  short,
+    description:        document.getElementById('p-desc').value || null
+  }).then(function(d) {
+    showToast('送信しました: ' + d.incident_id, 'success');
+    openPortalDetail(d.incident_id);
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+/* ═══════════════ PORTAL DETAIL ═══════════════ */
+function openPortalDetail(incId) {
+  _portalDetId = incId;
+  showPortal('detail');
+  apiGet('/incidents/' + incId).then(function(inc) {
+    document.getElementById('pd-id').textContent  = inc.incident_id;
+    document.getElementById('pd-badge').innerHTML = stateBadge(inc.state);
+    stageBar(inc.state, 'pd-stage');
+    document.getElementById('pd-catalog').textContent =
+      (inc.service_catalog ? inc.service_catalog.icon + ' ' + inc.service_catalog.name : '');
+    document.getElementById('pd-desc').textContent = inc.short_description;
+    document.getElementById('pd-meta').textContent =
+      '受付: ' + fmtDt(inc.opened_at) + '  |  Urgency: ' + (inc.urgency || '-') +
+      '  |  担当グループ: ' + (inc.assigned_group ? inc.assigned_group.name : '未割当');
+  });
+  apiGet('/incidents/' + incId + '/notes?note_type=public_comment').then(function(notes) {
+    renderActivity(notes, 'pd-activity');
+  });
+}
+
+function postPortalComment() {
+  var body = document.getElementById('pd-comment').value.trim();
+  if (!body || !_portalDetId) return;
+  apiPost('/incidents/' + _portalDetId + '/notes', {
+    body: body, note_type: 'public_comment'
+  }).then(function() {
+    document.getElementById('pd-comment').value = '';
+    showToast('投稿しました', 'success');
+    apiGet('/incidents/' + _portalDetId + '/notes?note_type=public_comment').then(function(notes) {
+      renderActivity(notes, 'pd-activity');
+    });
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+/* ═══════════════ TOAST ═══════════════ */
+function showToast(msg, type) {
+  var el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3200);
+}
+
+/* ═══════════════ INIT ═══════════════ */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('screen-login').style.display !== 'none') {
+    doLogin();
+  }
+});
+</script>
+</body>
+</html>
