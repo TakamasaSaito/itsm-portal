@@ -18,6 +18,20 @@ _bearer = HTTPBearer()
 router = APIRouter(prefix="/api/itsm/auth", tags=["auth"])
 
 
+async def _resolve_group_id(db: aiosqlite.Connection, user: dict):
+    """group_leader→leaderロールのgroup_id、member→memberロールのgroup_idを返す。それ以外はNone。"""
+    role = user["role"]
+    if role not in ("group_leader", "member"):
+        return None
+    gm_role = "leader" if role == "group_leader" else "member"
+    async with db.execute(
+        "SELECT group_id FROM group_member WHERE user_id = ? AND role = ? ORDER BY group_id LIMIT 1",
+        [user["user_id"], gm_role],
+    ) as cur:
+        gm = await cur.fetchone()
+    return gm["group_id"] if gm else None
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -49,7 +63,9 @@ async def get_current_user(
         row = await cur.fetchone()
     if row is None:
         raise HTTPException(status_code=401, detail="User not found")
-    return dict(row)
+    user_dict = dict(row)
+    user_dict["group_id"] = await _resolve_group_id(db, user_dict)
+    return user_dict
 
 
 @router.post("/login")
@@ -70,6 +86,7 @@ async def login(req: LoginRequest, db: aiosqlite.Connection = Depends(get_db)):
         "username": row["username"],
         "role": row["role"],
     })
+    group_id = await _resolve_group_id(db, dict(row))
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -77,6 +94,7 @@ async def login(req: LoginRequest, db: aiosqlite.Connection = Depends(get_db)):
         "username": row["username"],
         "full_name": row["full_name"],
         "role": row["role"],
+        "group_id": group_id,
     }
 
 

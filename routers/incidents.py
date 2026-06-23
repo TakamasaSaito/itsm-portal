@@ -145,6 +145,49 @@ async def _get_incident_detail(db: aiosqlite.Connection, incident_id: str) -> di
     }
 
 
+# ── RBAC helpers ─────────────────────────────────────────────────────────────
+
+def _rbac_list_filter(current_user: dict, where: list, params: list) -> None:
+    """ロールに応じてインシデント一覧のWHERE句を追加する。userは403。"""
+    role = current_user["role"]
+    if role == "user":
+        raise HTTPException(403, "管理画面へのアクセス権限がありません")
+    if role == "group_leader":
+        gid = current_user.get("group_id")
+        if gid:
+            where.append("i.assigned_group_id = ?")
+            params.append(gid)
+    elif role == "member":
+        where.append("i.assigned_user_id = ?")
+        params.append(current_user["user_id"])
+    # admin: フィルタなし
+
+
+async def _assert_access(
+    incident_id: str,
+    current_user: dict,
+    db: aiosqlite.Connection,
+) -> dict:
+    """インシデントを取得しつつロールアクセスを検証する。row dictを返す。"""
+    async with db.execute(
+        "SELECT incident_id, assigned_group_id, assigned_user_id FROM incident WHERE incident_id = ?",
+        [incident_id],
+    ) as cur:
+        inc = await cur.fetchone()
+    if inc is None:
+        raise HTTPException(404, "Incident not found")
+    role = current_user["role"]
+    if role == "user":
+        raise HTTPException(403, "管理画面へのアクセス権限がありません")
+    if role == "group_leader":
+        if inc["assigned_group_id"] != current_user.get("group_id"):
+            raise HTTPException(403, "このインシデントへのアクセス権限がありません")
+    elif role == "member":
+        if inc["assigned_user_id"] != current_user["user_id"]:
+            raise HTTPException(403, "このインシデントへのアクセス権限がありません")
+    return dict(inc)
+
+
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
 @router.get("")
@@ -156,15 +199,24 @@ async def list_incidents(
     assigned_group_id: Optional[int] = Query(None),
     assigned_user_id: Optional[int] = Query(None),
     q: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     where = ["1=1"]
     params = []
 
+    _rbac_list_filter(current_user, where, params)
+
     if state:
-        where.append("i.state = ?")
-        params.append(state)
+        if state == "open":
+            where.append("i.state IN ('new','assigned','in_progress')")
+        else:
+            where.append("i.state = ?")
+            params.append(state)
+    if date:
+        where.append("DATE(i.opened_at) = ?")
+        params.append(date)
     if priority:
         where.append("i.priority = ?")
         params.append(priority)
@@ -227,6 +279,7 @@ async def get_incident(
     db: aiosqlite.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    await _assert_access(incident_id, current_user, db)
     return await _get_incident_detail(db, incident_id)
 
 
@@ -296,9 +349,41 @@ async def update_incident(
     if inc is None:
         raise HTTPException(404, "Incident not found")
 
+    # ── RBAC permission check ─────────────────────────────────
+    role = current_user["role"]
+    if role == "user":
+        raise HTTPException(403, "管理画面へのアクセス権限がありません")
+    if role == "group_leader":
+        if inc["assigned_group_id"] != current_user.get("group_id"):
+            raise HTTPException(403, "このインシデントへのアクセス権限がありません")
+    elif role == "member":
+        if inc["assigned_user_id"] != current_user["user_id"]:
+            raise HTTPException(403, "このインシデントへのアクセス権限がありません")
+
     updates = body.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(400, "更新フィールドが指定されていません")
+
+    # ── Field-level permission ────────────────────────────────
+    if role == "member":
+        blocked = {"assigned_group_id", "assigned_user_id", "service_catalog_id", "caller_user_id"}
+        for f in blocked:
+            if f in updates:
+                raise HTTPException(403, "この操作には権限がありません")
+    if role == "group_leader":
+        if "assigned_group_id" in updates:
+            raise HTTPException(403, "グループの変更はadminのみ可能です")
+        if "service_catalog_id" in updates:
+            raise HTTPException(403, "サービスカタログの変更はadminのみ可能です")
+        # assigned_user_id は自グループ内のユーザーのみ
+        if "assigned_user_id" in updates and updates["assigned_user_id"]:
+            gid = current_user.get("group_id")
+            async with db.execute(
+                "SELECT 1 FROM group_member WHERE group_id = ? AND user_id = ?",
+                [gid, updates["assigned_user_id"]],
+            ) as cur:
+                if await cur.fetchone() is None:
+                    raise HTTPException(403, "自グループのメンバーのみアサイン可能です")
 
     # Auto-route when catalog changes
     if "service_catalog_id" in updates:
@@ -342,11 +427,7 @@ async def list_notes(
     db: aiosqlite.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    async with db.execute(
-        "SELECT incident_id FROM incident WHERE incident_id = ?", [incident_id]
-    ) as cur:
-        if await cur.fetchone() is None:
-            raise HTTPException(404, "Incident not found")
+    await _assert_access(incident_id, current_user, db)
 
     where = ["wn.ticket_type = 'incident'", "wn.ticket_id = ?"]
     params = [incident_id]
@@ -377,11 +458,7 @@ async def add_note(
     db: aiosqlite.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    async with db.execute(
-        "SELECT incident_id FROM incident WHERE incident_id = ?", [incident_id]
-    ) as cur:
-        if await cur.fetchone() is None:
-            raise HTTPException(404, "Incident not found")
+    await _assert_access(incident_id, current_user, db)
 
     note_type = body.note_type or "work_note"
     created_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")

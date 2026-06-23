@@ -54,7 +54,8 @@ select,input,textarea{font-family:inherit;font-size:14px}
 .section-hd h2{font-size:20px;font-weight:700;color:var(--navy);flex:1}
 /* ── KPI ─────────────────────────────────────────────────── */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.kpi-card{background:var(--white);border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--gold)}
+.kpi-card{background:var(--white);border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--gold);cursor:pointer;transition:box-shadow .15s,transform .15s}
+.kpi-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.14);transform:translateY(-2px)}
 .kpi-card.red{border-left-color:#dc2626}
 .kpi-card.blue{border-left-color:#2563eb}
 .kpi-card.yellow{border-left-color:#d97706}
@@ -172,6 +173,16 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
 .toast.success{background:#15803d}
 .toast.error{background:#b91c1c}
 @keyframes tsIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── Demo buttons ─────────────────────────────────────────── */
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:16px}
+.btn-demo{background:#f3f4f6;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;text-align:left;transition:background .15s}
+.btn-demo:hover{background:#e5e7eb}
+/* ── Role badge ──────────────────────────────────────────── */
+.role-badge{font-size:11px;padding:2px 8px;border-radius:3px;font-weight:700;white-space:nowrap}
+.rb-admin{background:rgba(220,38,38,.2);color:#fca5a5}
+.rb-group-leader{background:rgba(201,168,76,.25);color:var(--gold)}
+.rb-member{background:rgba(37,99,235,.2);color:#93c5fd}
+.rb-user{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
 /* ── Misc ────────────────────────────────────────────────── */
 .empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
 </style>
@@ -189,6 +200,15 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
     <label>パスワード</label>
     <input id="inp-pw" type="password" placeholder="パスワード" autocomplete="current-password">
     <button class="btn-primary" onclick="doLogin()">ログイン</button>
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">デモ用クイックログイン</div>
+      <div class="demo-grid">
+        <button class="btn-demo" onclick="quickLogin('admin','admin')">👑 admin でログイン</button>
+        <button class="btn-demo" onclick="quickLogin('yamada.kenji','pass123')">👔 グループリーダーでログイン</button>
+        <button class="btn-demo" onclick="quickLogin('ogawa.daisuke','pass123')">🔧 担当者でログイン</button>
+        <button class="btn-demo" onclick="quickLogin('user','user')">👤 一般ユーザーでログイン</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -204,6 +224,7 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
       <button id="btn-va" onclick="switchView('admin')" class="active">管理画面</button>
     </div>
     <span class="header-user" id="hdr-uname"></span>
+    <span class="role-badge" id="hdr-role"></span>
     <button class="btn-logout" onclick="doLogout()">ログアウト</button>
   </header>
 
@@ -270,6 +291,7 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
         <div class="filter-bar">
           <select id="flt-state" onchange="applyFilters()">
             <option value="">全ステータス</option>
+            <option value="open">オープン（未完了）</option>
             <option value="new">新規</option>
             <option value="assigned">割当済</option>
             <option value="in_progress">対応中</option>
@@ -456,10 +478,13 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
 /* ═══════════════ STATE ═══════════════ */
 var _token = null;
 var _user  = null;
+var _myRole = null;
+var _myGroupId = null;
 var _view  = 'admin';
 var _curSection = 'dashboard';
 var _curInc = null;
 var _incPage = 1;
+var _incDateFilter = null;
 var _portalCatId = null;
 var _portalDetId = null;
 var _cache = { groups:null, catalogs:null, users:null };
@@ -496,24 +521,58 @@ function loadCache() {
 }
 
 /* ═══════════════ AUTH ═══════════════ */
+var ROLE_LABEL = {
+  admin:        'Admin（事務局）',
+  group_leader: 'グループリーダー',
+  member:       '担当者（Member）',
+  user:         '一般ユーザー'
+};
+var ROLE_BADGE_CLS = {
+  admin:        'rb-admin',
+  group_leader: 'rb-group-leader',
+  member:       'rb-member',
+  user:         'rb-user'
+};
+
+function _applyRoleBadge(role) {
+  var el = document.getElementById('hdr-role');
+  el.textContent = ROLE_LABEL[role] || role;
+  el.className = 'role-badge ' + (ROLE_BADGE_CLS[role] || 'rb-user');
+}
+
+function quickLogin(username, password) {
+  document.getElementById('inp-un').value = username;
+  document.getElementById('inp-pw').value = password;
+  doLogin();
+}
+
 function doLogin() {
   var u = document.getElementById('inp-un').value.trim();
   var p = document.getElementById('inp-pw').value;
   if (!u || !p) return;
   apiPost('/auth/login', { username: u, password: p })
     .then(function(d) {
-      _token = d.access_token;
-      _user  = d;
+      _token     = d.access_token;
+      _user      = d;
+      _myRole    = d.role;
+      _myGroupId = d.group_id || null;
       document.getElementById('hdr-uname').textContent = d.full_name;
+      _applyRoleBadge(d.role);
       document.getElementById('login-error').style.display = 'none';
       document.getElementById('screen-login').style.display = 'none';
       document.getElementById('screen-app').style.display = 'block';
+      // roleがuserの場合は管理画面ボタンを非表示
+      document.getElementById('btn-va').style.display = d.role === 'user' ? 'none' : '';
       return loadCache();
     })
     .then(function() {
       fillCatalogFilter();
-      switchView('admin');
-      showSection('dashboard');
+      if (_myRole === 'user') {
+        switchView('portal');
+      } else {
+        switchView('admin');
+        showSection('dashboard');
+      }
     })
     .catch(function() {
       document.getElementById('login-error').style.display = 'block';
@@ -521,7 +580,8 @@ function doLogin() {
 }
 
 function doLogout() {
-  _token = null; _user = null;
+  _token = null; _user = null; _myRole = null; _myGroupId = null;
+  document.getElementById('btn-va').style.display = '';
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('inp-pw').value = '';
@@ -529,6 +589,10 @@ function doLogout() {
 
 /* ═══════════════ NAVIGATION ═══════════════ */
 function switchView(v) {
+  if (v === 'admin' && _myRole === 'user') {
+    showToast('管理画面へのアクセス権限がありません', 'error');
+    return;
+  }
   _view = v;
   document.getElementById('admin-view').style.display  = v === 'admin'  ? 'flex'  : 'none';
   document.getElementById('portal-view').style.display = v === 'portal' ? 'block' : 'none';
@@ -699,20 +763,37 @@ function loadDashboard() {
 
 function renderKPIs(kpi) {
   var items = [
-    { label:'オープン件数', value:kpi.open_count, cls:'', icon:'📋' },
-    { label:'重大インシデント', value:kpi.critical_count, cls:'red', icon:'🔴' },
-    { label:'保留中', value:kpi.on_hold_count, cls:'yellow', icon:'⏸' },
-    { label:'本日の新規', value:kpi.today_count, cls:'blue', icon:'📅' }
+    { label:'オープン件数',   value:kpi.open_count,     cls:'',       icon:'📋', onclick:'gotoIncidents(\'open\',\'\',null)' },
+    { label:'重大インシデント', value:kpi.critical_count, cls:'red',    icon:'🔴', onclick:'gotoIncidents(\'\',\'1-critical\',null)' },
+    { label:'保留中',        value:kpi.on_hold_count,   cls:'yellow', icon:'⏸', onclick:'gotoIncidents(\'on_hold\',\'\',null)' },
+    { label:'本日の新規',    value:kpi.today_count,     cls:'blue',   icon:'📅', onclick:'gotoIncidents(\'\',\'\',\'today\')' }
   ];
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
-    html += '<div class="kpi-card ' + it.cls + '">';
+    html += '<div class="kpi-card ' + it.cls + '" onclick="' + it.onclick + '">';
     html += '<div class="kpi-label">' + it.icon + ' ' + it.label + '</div>';
     html += '<div class="kpi-value">' + it.value + '</div>';
     html += '</div>';
   }
   document.getElementById('kpi-grid').innerHTML = html;
+}
+
+function todayStr() {
+  var d = new Date();
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' + m : '' + m) + '-' + (day < 10 ? '0' + day : '' + day);
+}
+
+function gotoIncidents(stateVal, prioVal, dateVal) {
+  _incDateFilter = (dateVal === 'today') ? todayStr() : dateVal;
+  _incPage = 1;
+  document.getElementById('flt-state').value    = stateVal  || '';
+  document.getElementById('flt-priority').value = prioVal   || '';
+  document.getElementById('flt-catalog').value  = '';
+  document.getElementById('flt-q').value        = '';
+  showSection('incidents');
 }
 
 function renderPrioChart(data) {
@@ -779,7 +860,7 @@ function renderRecentOpen(items) {
 }
 
 /* ═══════════════ INCIDENT LIST ═══════════════ */
-function applyFilters() { _incPage = 1; loadIncidents(); }
+function applyFilters() { _incDateFilter = null; _incPage = 1; loadIncidents(); }
 
 function loadIncidents() {
   var state    = document.getElementById('flt-state').value;
@@ -787,10 +868,11 @@ function loadIncidents() {
   var catalog  = document.getElementById('flt-catalog').value;
   var q        = document.getElementById('flt-q').value;
   var params   = '?page=' + _incPage;
-  if (state)    params += '&state='              + encodeURIComponent(state);
-  if (priority) params += '&priority='           + encodeURIComponent(priority);
-  if (catalog)  params += '&service_catalog_id=' + catalog;
-  if (q)        params += '&q='                  + encodeURIComponent(q);
+  if (state)           params += '&state='              + encodeURIComponent(state);
+  if (priority)        params += '&priority='           + encodeURIComponent(priority);
+  if (catalog)         params += '&service_catalog_id=' + catalog;
+  if (q)               params += '&q='                  + encodeURIComponent(q);
+  if (_incDateFilter)  params += '&date='               + encodeURIComponent(_incDateFilter);
 
   apiGet('/incidents' + params).then(function(d) {
     renderIncTable(d.items);
@@ -888,6 +970,20 @@ function renderDetailForm(inc) {
   document.getElementById('det-urgency').addEventListener('change', function() {
     recalcPrio('det-impact', 'det-urgency', 'det-prio');
   });
+
+  // ── RBAC: フィールド権限制御 ──────────────────────────────
+  function _ro(id) {
+    var el = document.getElementById(id);
+    if (el) { el.disabled = true; el.style.background = '#f9fafb'; el.style.color = 'var(--muted)'; }
+  }
+  if (_myRole !== 'admin') {
+    _ro('det-catalog');
+    _ro('det-group');
+    _ro('det-caller');
+  }
+  if (_myRole === 'member') {
+    _ro('det-user');
+  }
 }
 
 function renderResolutionForm(inc) {
