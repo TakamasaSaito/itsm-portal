@@ -66,14 +66,14 @@ async def get_dashboard(
 
     # ── By service catalog ────────────────────────────────────
     async with db.execute(
-        """SELECT sc.name, sc.icon, COUNT(i.incident_id) AS cnt
+        """SELECT sc.catalog_id, sc.name, sc.icon, COUNT(i.incident_id) AS cnt
            FROM service_catalog sc
            LEFT JOIN incident i ON i.service_catalog_id = sc.catalog_id
            GROUP BY sc.catalog_id
            ORDER BY cnt DESC"""
     ) as cur:
         rows = await cur.fetchall()
-    by_catalog = [{"catalog_name": r[0], "icon": r[1], "count": r[2]} for r in rows]
+    by_catalog = [{"catalog_id": r[0], "catalog_name": r[1], "icon": r[2], "count": r[3]} for r in rows]
 
     # ── Recent open incidents (top 5) ────────────────────────
     async with db.execute(

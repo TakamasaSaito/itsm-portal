@@ -53,17 +53,17 @@ select,input,textarea{font-family:inherit;font-size:14px}
 .section-hd{display:flex;align-items:center;gap:12px;margin-bottom:20px}
 .section-hd h2{font-size:20px;font-weight:700;color:var(--navy);flex:1}
 /* ── KPI ─────────────────────────────────────────────────── */
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.kpi-card{background:var(--white);border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--gold);cursor:pointer;transition:box-shadow .15s,transform .15s}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.kpi-card{background:var(--white);border-radius:10px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--gold);cursor:pointer;transition:box-shadow .15s,transform .15s}
 .kpi-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.14);transform:translateY(-2px)}
 .kpi-card.red{border-left-color:#dc2626}
 .kpi-card.blue{border-left-color:#2563eb}
 .kpi-card.yellow{border-left-color:#d97706}
-.kpi-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.kpi-value{font-size:36px;font-weight:700;color:var(--navy);line-height:1.2;margin-top:6px}
-.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.chart-card{background:var(--white);border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.chart-card h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--navy);line-height:1.2;margin-top:4px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.chart-card{background:var(--white);border-radius:10px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px}
 /* ── Table ───────────────────────────────────────────────── */
 .table-wrap{background:var(--white);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}
 table{width:100%;border-collapse:collapse}
@@ -183,8 +183,46 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
 .rb-group-leader{background:rgba(201,168,76,.25);color:var(--gold)}
 .rb-member{background:rgba(37,99,235,.2);color:#93c5fd}
 .rb-user{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
+/* ── Swimlane ────────────────────────────────────────────── */
+.swimlane{margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.swim-lane{display:flex;align-items:center;min-height:48px;border-bottom:1px solid var(--border)}
+.swim-lane:last-child{border-bottom:none}
+.swim-lane-hd{width:116px;flex-shrink:0;padding:8px 10px;font-size:12px;font-weight:700;background:#f9fafb;border-right:1px solid var(--border);align-self:stretch;display:flex;align-items:center;line-height:1.4;color:var(--text)}
+.swim-steps{display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:8px 12px;flex:1}
+.swim-step{padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap}
+.swim-step.done{background:#dcfce7;color:#166534}
+.swim-step.current{background:var(--gold);color:var(--navy)}
+.swim-step.future{background:#f3f4f6;color:var(--muted)}
+.swim-arrow{color:var(--muted);font-size:11px;padding:0 2px;flex-shrink:0}
+/* ── Workflow activity ───────────────────────────────────── */
+.wf-item{display:flex;gap:12px;margin-bottom:10px;padding:10px 14px;border-radius:8px;background:#f9fafb;border:1px solid var(--border)}
+.wf-item.pub{background:#eff6ff;border-color:#bfdbfe}
+.wf-pub-label{font-size:11px;color:#1d4ed8;font-weight:700}
+.wf-hold-banner{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:8px 14px;font-size:13px;color:#9a3412;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+/* ── Portal assignee info ────────────────────────────────── */
+.pd-asgn{display:flex;gap:20px;margin-bottom:16px;font-size:12px;flex-wrap:wrap}
+.pd-asgn-item{display:flex;flex-direction:column;gap:2px}
+.pd-asgn-lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.pd-asgn-val{font-size:13px;font-weight:600;color:var(--text)}
 /* ── Misc ────────────────────────────────────────────────── */
 .empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+/* ── Kanban ──────────────────────────────────────────────── */
+.inc-view-toggle{display:flex;gap:4px}
+.inc-view-btn{padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);font-size:13px;cursor:pointer;font-weight:600;line-height:1.4}
+.inc-view-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.kanban-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:20px;align-items:flex-start}
+.kanban-col{flex:0 0 210px;min-width:0}
+.kanban-col-hd{border-radius:8px 8px 0 0;padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.kanban-col-title{font-size:13px;font-weight:700;color:#fff}
+.kanban-count{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.25);color:#fff}
+.kanban-cards{background:#f3f4f6;border-radius:0 0 8px 8px;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:60px}
+.kanban-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer}
+.kanban-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.kanban-card-id{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.kanban-card-desc{font-size:12px;color:var(--text);line-height:1.4;overflow:hidden;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kanban-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kanban-asgn{font-size:11px;color:var(--muted)}
+.kanban-date{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -273,8 +311,18 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
         <div class="section-hd"><h2>📊 ITSMダッシュボード</h2></div>
         <div class="kpi-grid" id="kpi-grid"></div>
         <div class="chart-grid">
-          <div class="chart-card"><h3>優先度別インシデント</h3><canvas id="chart-priority" height="220"></canvas></div>
-          <div class="chart-card"><h3>週次トレンド（直近7日）</h3><canvas id="chart-trend" height="220"></canvas></div>
+          <div class="chart-card"><h3>優先度別インシデント</h3><canvas id="chart-priority" height="150"></canvas></div>
+          <div class="chart-card"><h3>週次トレンド（直近7日）</h3><canvas id="chart-trend" height="150"></canvas></div>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-card">
+            <h3>サービス別インシデント件数</h3>
+            <div style="display:flex;gap:16px;align-items:center">
+              <div style="flex:0 0 150px"><canvas id="chart-catalog" height="150"></canvas></div>
+              <div id="catalog-legend" style="flex:1;overflow-y:auto;max-height:150px;font-size:12px"></div>
+            </div>
+          </div>
+          <div class="chart-card"><h3>State別インシデント件数</h3><canvas id="chart-state" height="150"></canvas></div>
         </div>
         <div class="card">
           <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">🔴 重大・未解決インシデント（上位5件）</div>
@@ -286,6 +334,10 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
       <div id="sec-incidents" style="display:none">
         <div class="section-hd">
           <h2>🚨 インシデント一覧</h2>
+          <div id="inc-view-toggle" class="inc-view-toggle" style="display:none">
+            <button class="inc-view-btn active" id="vbtn-list" onclick="switchIncView('list')">📋 リスト</button>
+            <button class="inc-view-btn" id="vbtn-kanban" onclick="switchIncView('kanban')">📌 カンバン</button>
+          </div>
           <button class="btn-sm btn-gold" onclick="showSection('newinc')">＋ 新規作成</button>
         </div>
         <div class="filter-bar">
@@ -310,19 +362,22 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
           <select id="flt-catalog" onchange="applyFilters()"><option value="">全カタログ</option></select>
           <input id="flt-q" placeholder="ID・件名で検索" style="min-width:180px" oninput="applyFilters()">
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Number</th><th>Short description</th><th>Caller</th>
-                <th>Priority</th><th>State</th><th>Category</th>
-                <th>Assignment group</th><th>Assigned to</th><th>Opened</th>
-              </tr>
-            </thead>
-            <tbody id="inc-tbody"></tbody>
-          </table>
+        <div id="inc-list-wrap">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Number</th><th>Short description</th><th>Caller</th>
+                  <th>Priority</th><th>State</th><th>Category</th>
+                  <th>Assignment group</th><th>Assigned to</th><th>Opened</th>
+                </tr>
+              </thead>
+              <tbody id="inc-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="inc-pager"></div>
         </div>
-        <div class="pagination" id="inc-pager"></div>
+        <div id="inc-kanban" style="display:none"></div>
       </div>
 
       <!-- Incident detail -->
@@ -336,6 +391,11 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
         </div>
         <div id="det-hold-banner" class="on-hold-banner" style="display:none">⏸ このインシデントは保留中です</div>
         <div id="det-stage" class="stage-bar"></div>
+        <div class="card" style="padding-bottom:16px">
+          <div id="wf-swimlane"></div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin:4px 0 12px">Activity（全履歴）</div>
+          <div id="wf-activity-list"></div>
+        </div>
         <div class="card"><div class="form-2col" id="det-form"></div></div>
         <div class="card" style="padding-bottom:0">
           <div class="tab-bar">
@@ -452,13 +512,14 @@ tr.clickable:hover td{background:#fafafa;cursor:pointer}
           <button class="btn-sm btn-outline" onclick="showPortal('top')">← 戻る</button>
         </div>
         <div id="pd-stage" class="stage-bar"></div>
+        <div id="pd-asgn" class="pd-asgn"></div>
         <div class="card" style="margin-bottom:16px">
           <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="pd-catalog"></div>
           <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px" id="pd-desc"></div>
           <div style="font-size:12px;color:var(--muted)" id="pd-meta"></div>
         </div>
         <div class="card">
-          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">Activity</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">担当者からのメッセージ</div>
           <div class="activity-list" id="pd-activity" style="margin-bottom:16px"></div>
           <textarea id="pd-comment" rows="3" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;outline:none;resize:vertical" placeholder="コメントを入力..."></textarea>
           <div style="margin-top:8px;text-align:right">
@@ -484,12 +545,16 @@ var _view  = 'admin';
 var _curSection = 'dashboard';
 var _curInc = null;
 var _incPage = 1;
+var _incView = 'list';
 var _incDateFilter = null;
 var _portalCatId = null;
 var _portalDetId = null;
 var _cache = { groups:null, catalogs:null, users:null };
 var _chartPri = null;
 var _chartTrend = null;
+var _chartDonut = null;
+var _chartStateBar = null;
+var _donutCatalogIds = [];
 
 /* ═══════════════ API ═══════════════ */
 function apiFetch(path, method, body) {
@@ -563,6 +628,8 @@ function doLogin() {
       document.getElementById('screen-app').style.display = 'block';
       // roleがuserの場合は管理画面ボタンを非表示
       document.getElementById('btn-va').style.display = d.role === 'user' ? 'none' : '';
+      var tog = document.getElementById('inc-view-toggle');
+      if (tog) tog.style.display = (d.role === 'admin' || d.role === 'group_leader') ? 'flex' : 'none';
       return loadCache();
     })
     .then(function() {
@@ -581,6 +648,9 @@ function doLogin() {
 
 function doLogout() {
   _token = null; _user = null; _myRole = null; _myGroupId = null;
+  _incView = 'list';
+  var tog = document.getElementById('inc-view-toggle');
+  if (tog) tog.style.display = 'none';
   document.getElementById('btn-va').style.display = '';
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
@@ -614,7 +684,10 @@ function showSection(name) {
   }
   _curSection = name;
   if (name === 'dashboard')  loadDashboard();
-  if (name === 'incidents') { _incPage = 1; loadIncidents(); }
+  if (name === 'incidents') {
+    _incPage = 1;
+    if (_incView === 'kanban') { loadKanban(); } else { loadIncidents(); }
+  }
   if (name === 'newinc')    renderNewIncForm();
 }
 
@@ -757,6 +830,8 @@ function loadDashboard() {
     renderKPIs(d.kpi);
     renderPrioChart(d.by_priority);
     renderTrendChart(d.weekly_trend);
+    renderCatalogChart(d.by_catalog);
+    renderStateChart(d.by_state);
     renderRecentOpen(d.recent_open);
   }).catch(function(e) { showToast(String(e), 'error'); });
 }
@@ -793,6 +868,7 @@ function gotoIncidents(stateVal, prioVal, dateVal) {
   document.getElementById('flt-priority').value = prioVal   || '';
   document.getElementById('flt-catalog').value  = '';
   document.getElementById('flt-q').value        = '';
+  if (_incView === 'kanban') { switchIncView('list'); }
   showSection('incidents');
 }
 
@@ -813,7 +889,7 @@ function renderPrioChart(data) {
   _chartPri = new Chart(ctx, {
     type:'bar',
     data:{ labels:labels, datasets:[{ data:vals, backgroundColor:colors, borderRadius:4 }] },
-    options:{ plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{stepSize:1}} } }
+    options:{ plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}}}, x:{ticks:{font:{size:11}}} } }
   });
 }
 
@@ -833,7 +909,90 @@ function renderTrendChart(data) {
       fill:true, tension:.3,
       pointBackgroundColor:'#c9a84c'
     }] },
-    options:{ plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{stepSize:1}} } }
+    options:{ plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}}}, x:{ticks:{font:{size:11}}} } }
+  });
+}
+
+function gotoCatalogIncidents(catalogId) {
+  _incPage = 1;
+  _incDateFilter = null;
+  document.getElementById('flt-state').value    = '';
+  document.getElementById('flt-priority').value = '';
+  document.getElementById('flt-catalog').value  = String(catalogId);
+  document.getElementById('flt-q').value        = '';
+  if (_incView === 'kanban') { switchIncView('list'); }
+  showSection('incidents');
+}
+
+function renderCatalogChart(data) {
+  var COLORS = [
+    'rgba(26,35,64,.85)',   'rgba(201,168,76,.85)', 'rgba(37,99,235,.85)',
+    'rgba(16,163,74,.85)',  'rgba(217,119,6,.85)',  'rgba(220,38,38,.85)',
+    'rgba(124,58,237,.85)', 'rgba(14,165,233,.85)', 'rgba(236,72,153,.85)',
+    'rgba(20,184,166,.85)'
+  ];
+  var labels = [], vals = [], colors = [];
+  _donutCatalogIds = [];
+  for (var i = 0; i < data.length; i++) {
+    labels.push((data[i].icon ? data[i].icon + ' ' : '') + data[i].catalog_name);
+    vals.push(data[i].count);
+    colors.push(COLORS[i % COLORS.length]);
+    _donutCatalogIds.push(data[i].catalog_id);
+  }
+  var ctx = document.getElementById('chart-catalog').getContext('2d');
+  if (_chartDonut) _chartDonut.destroy();
+  _chartDonut = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      cutout: '60%',
+      plugins: { legend: { display: false } },
+      onClick: function(event, activeElements) {
+        if (activeElements && activeElements.length > 0) {
+          var cid = _donutCatalogIds[activeElements[0].index];
+          if (cid) gotoCatalogIncidents(cid);
+        }
+      }
+    }
+  });
+  var legendHtml = '';
+  for (var j = 0; j < data.length; j++) {
+    var cid2 = _donutCatalogIds[j];
+    legendHtml += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;cursor:pointer" onclick="gotoCatalogIncidents(' + cid2 + ')">';
+    legendHtml += '<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + colors[j] + ';flex-shrink:0"></span>';
+    legendHtml += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-size:11px">' + esc(labels[j]) + '</span>';
+    legendHtml += '<span style="font-weight:700;color:var(--navy);flex-shrink:0;font-size:12px">' + data[j].count + '</span>';
+    legendHtml += '</div>';
+  }
+  document.getElementById('catalog-legend').innerHTML = legendHtml;
+}
+
+function renderStateChart(data) {
+  var S_COLORS = {
+    new:'rgba(107,114,128,.8)',  assigned:'rgba(29,78,216,.8)',
+    in_progress:'rgba(37,99,235,.8)', on_hold:'rgba(217,119,6,.8)',
+    resolved:'rgba(22,101,52,.8)', closed:'rgba(16,185,129,.8)'
+  };
+  var S_LABELS = {
+    new:'新規', assigned:'割当済', in_progress:'対応中',
+    on_hold:'保留', resolved:'解決済', closed:'クローズ'
+  };
+  var labels = [], vals = [], colors = [];
+  for (var i = 0; i < data.length; i++) {
+    labels.push(S_LABELS[data[i].state] || data[i].state);
+    vals.push(data[i].count);
+    colors.push(S_COLORS[data[i].state] || 'rgba(107,114,128,.8)');
+  }
+  var ctx = document.getElementById('chart-state').getContext('2d');
+  if (_chartStateBar) _chartStateBar.destroy();
+  _chartStateBar = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ data: vals, backgroundColor: colors, borderRadius: 4 }] },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } } }, y: { ticks: { font: { size: 11 } } } }
+    }
   });
 }
 
@@ -860,8 +1019,93 @@ function renderRecentOpen(items) {
 }
 
 /* ═══════════════ INCIDENT LIST ═══════════════ */
-function applyFilters() { _incDateFilter = null; _incPage = 1; loadIncidents(); }
+function applyFilters() {
+  _incDateFilter = null; _incPage = 1;
+  if (_incView === 'kanban') { loadKanban(); } else { loadIncidents(); }
+}
 
+/* ═══════════════ KANBAN ═══════════════ */
+var KANBAN_COLS = [
+  { state:'new',         label:'New',              color:'#6b7280' },
+  { state:'assigned',    label:'Assigned',          color:'#3b82f6' },
+  { state:'in_progress', label:'In Progress',       color:'#2563eb' },
+  { state:'on_hold',     label:'On Hold',           color:'#d97706' },
+  { state:'resolved',    label:'Resolved / Closed', color:'#16a34a' }
+];
+
+function switchIncView(v) {
+  _incView = v;
+  document.getElementById('vbtn-list').className   = 'inc-view-btn' + (v === 'list'   ? ' active' : '');
+  document.getElementById('vbtn-kanban').className = 'inc-view-btn' + (v === 'kanban' ? ' active' : '');
+  var listWrap = document.getElementById('inc-list-wrap');
+  var kanban   = document.getElementById('inc-kanban');
+  if (v === 'list') {
+    if (listWrap) listWrap.style.display = 'block';
+    if (kanban)   kanban.style.display   = 'none';
+    loadIncidents();
+  } else {
+    if (listWrap) listWrap.style.display = 'none';
+    if (kanban)   kanban.style.display   = 'block';
+    loadKanban();
+  }
+}
+
+function loadKanban() {
+  var priority = document.getElementById('flt-priority').value;
+  var catalog  = document.getElementById('flt-catalog').value;
+  var q        = document.getElementById('flt-q').value;
+  var params   = '?page=1&per_page=500';
+  if (priority) params += '&priority='           + encodeURIComponent(priority);
+  if (catalog)  params += '&service_catalog_id=' + catalog;
+  if (q)        params += '&q='                  + encodeURIComponent(q);
+  apiGet('/incidents' + params).then(function(d) {
+    renderKanban(d.items);
+  }).catch(function(e) { showToast(String(e), 'error'); });
+}
+
+function renderKanban(items) {
+  var buckets = {};
+  for (var i = 0; i < KANBAN_COLS.length; i++) {
+    buckets[KANBAN_COLS[i].state] = [];
+  }
+  for (var i = 0; i < items.length; i++) {
+    var s = items[i].state === 'closed' ? 'resolved' : items[i].state;
+    if (buckets[s]) buckets[s].push(items[i]);
+  }
+  var html = '<div class="kanban-board">';
+  for (var c = 0; c < KANBAN_COLS.length; c++) {
+    var col   = KANBAN_COLS[c];
+    var cards = buckets[col.state];
+    html += '<div class="kanban-col">';
+    html += '<div class="kanban-col-hd" style="background:' + col.color + '">';
+    html += '<span class="kanban-col-title">' + col.label + '</span>';
+    html += '<span class="kanban-count">' + cards.length + '</span>';
+    html += '</div><div class="kanban-cards">';
+    if (cards.length === 0) {
+      html += '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px 0">なし</div>';
+    }
+    for (var k = 0; k < cards.length; k++) {
+      var r = cards[k];
+      html += '<div class="kanban-card" onclick="openDetail(\'' + r.incident_id + '\')">';
+      html += '<div class="kanban-card-id">' + r.incident_id + '</div>';
+      html += '<div class="kanban-card-desc">' + esc(r.short_description) + '</div>';
+      html += '<div class="kanban-card-meta">';
+      html += prioBadge(r.priority);
+      if (r.assigned_name) {
+        html += '<span class="kanban-asgn">' + esc(r.assigned_name) + '</span>';
+      } else {
+        html += '<span class="kanban-asgn" style="color:var(--muted)">未アサイン</span>';
+      }
+      html += '<span class="kanban-date">' + fmtDt(r.opened_at) + '</span>';
+      html += '</div></div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById('inc-kanban').innerHTML = html;
+}
+
+/* ═══════════════ INCIDENTS LIST ═══════════════ */
 function loadIncidents() {
   var state    = document.getElementById('flt-state').value;
   var priority = document.getElementById('flt-priority').value;
@@ -930,8 +1174,8 @@ function loadDetail(id) {
     renderDetailHeader(inc);
     renderDetailForm(inc);
     renderResolutionForm(inc);
-    loadNotes(id);
     showTab('notes');
+    loadWorkflowTab(id);
   }).catch(function(e) { showToast(String(e), 'error'); });
 }
 
@@ -1072,6 +1316,87 @@ function showTab(name) {
     if (btn) btn.className = 'tab-btn'   + (tabs[i] === name ? ' active' : '');
   }
   if (name === 'notes' && _curInc) loadNotes(_curInc);
+}
+
+/* ═══════════════ WORKFLOW TAB ═══════════════ */
+var STATE_IDX = { new:0, assigned:1, in_progress:2, on_hold:2, resolved:3, closed:4 };
+var SWIM_LANES = [
+  { label:'👤 利用者', steps:[
+    { text:'カタログ選択', thr:-1 }, { text:'起票・Submit', thr:0 },
+    { text:'進捗確認', thr:2 }, { text:'解決通知受取', thr:3 }
+  ]},
+  { label:'⚡ 自動処理', steps:[
+    { text:'チケット発番', thr:-1 }, { text:'グループ自動アサイン', thr:0 },
+    { text:'resolved_at記録', thr:2 }, { text:'closed_at記録', thr:3 }
+  ]},
+  { label:'🏅 leader', steps:[
+    { text:'担当者アサイン', thr:1 }, { text:'クローズ確認', thr:3 }
+  ]},
+  { label:'🔧 member', steps:[
+    { text:'対応開始', thr:1 }, { text:'Work notes記録', thr:2 }, { text:'解決登録', thr:3 }
+  ]}
+];
+
+function renderSwimlane(state) {
+  var curIdx = STATE_IDX[state] !== undefined ? STATE_IDX[state] : 0;
+  var html = '<div class="swimlane">';
+  for (var i = 0; i < SWIM_LANES.length; i++) {
+    var lane = SWIM_LANES[i];
+    html += '<div class="swim-lane">';
+    html += '<div class="swim-lane-hd">' + lane.label + '</div>';
+    html += '<div class="swim-steps">';
+    for (var j = 0; j < lane.steps.length; j++) {
+      var step = lane.steps[j];
+      var cls = curIdx > step.thr ? 'done' : (curIdx === step.thr ? 'current' : 'future');
+      if (j > 0) html += '<span class="swim-arrow">→</span>';
+      html += '<span class="swim-step ' + cls + '">' + step.text + '</span>';
+    }
+    html += '</div></div>';
+  }
+  return html + '</div>';
+}
+
+function renderWorkflowActivity(notes, containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (!notes || notes.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">履歴はありません</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < notes.length; i++) {
+    var n = notes[i];
+    var isPub = n.note_type === 'public_comment';
+    html += '<div class="wf-item' + (isPub ? ' pub' : '') + '">';
+    html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">';
+    html += (n.author_name || '?').charAt(0);
+    html += '</div>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+    html += '<span style="font-size:13px;font-weight:700;color:var(--text)">' + (n.author_name || '') + '</span>';
+    if (isPub) html += '<span class="wf-pub-label">Customer visible</span>';
+    html += '<span style="font-size:11px;color:var(--muted);margin-left:auto">' + (n.created_at || '').replace('T', ' ').substring(0, 16) + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:13px;color:var(--text);white-space:pre-wrap">' + (n.body || '') + '</div>';
+    html += '</div></div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderWorkflowTab(inc, notes) {
+  var s = inc.state || 'new';
+  var swimEl = document.getElementById('wf-swimlane');
+  if (swimEl) swimEl.innerHTML = renderSwimlane(s);
+  renderWorkflowActivity(notes, 'wf-activity-list');
+}
+
+function loadWorkflowTab(id) {
+  Promise.all([
+    apiGet('/incidents/' + id),
+    apiGet('/incidents/' + id + '/notes')
+  ]).then(function(results) {
+    renderWorkflowTab(results[0], results[1]);
+  }).catch(function(e) { showToast(String(e), 'error'); });
 }
 
 /* ═══════════════ NOTES ═══════════════ */
@@ -1275,8 +1600,22 @@ function openPortalDetail(incId) {
       (inc.service_catalog ? inc.service_catalog.icon + ' ' + inc.service_catalog.name : '');
     document.getElementById('pd-desc').textContent = inc.short_description;
     document.getElementById('pd-meta').textContent =
-      '受付: ' + fmtDt(inc.opened_at) + '  |  Urgency: ' + (inc.urgency || '-') +
-      '  |  担当グループ: ' + (inc.assigned_group ? inc.assigned_group.name : '未割当');
+      '受付: ' + fmtDt(inc.opened_at) + '  |  Urgency: ' + (inc.urgency || '-');
+    var groupName  = inc.assigned_group  ? inc.assigned_group.name  : '未割当';
+    var assignName = inc.assigned_user   ? inc.assigned_user.full_name : '未割当';
+    document.getElementById('pd-asgn').innerHTML =
+      '<div class="pd-asgn-item">' +
+        '<span class="pd-asgn-lbl">担当グループ</span>' +
+        '<span class="pd-asgn-val">' + groupName + '</span>' +
+      '</div>' +
+      '<div class="pd-asgn-item">' +
+        '<span class="pd-asgn-lbl">担当者</span>' +
+        '<span class="pd-asgn-val">' + assignName + '</span>' +
+      '</div>' +
+      '<div class="pd-asgn-item">' +
+        '<span class="pd-asgn-lbl">Priority</span>' +
+        '<span class="pd-asgn-val">' + (inc.priority || '-') + '</span>' +
+      '</div>';
   });
   apiGet('/incidents/' + incId + '/notes?note_type=public_comment').then(function(notes) {
     renderActivity(notes, 'pd-activity');

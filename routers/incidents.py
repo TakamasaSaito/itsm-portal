@@ -193,6 +193,7 @@ async def _assert_access(
 @router.get("")
 async def list_incidents(
     page: int = Query(1, ge=1),
+    per_page: Optional[int] = Query(None, ge=1, le=500),
     state: Optional[str] = Query(None),
     priority: Optional[str] = Query(None),
     service_catalog_id: Optional[int] = Query(None),
@@ -240,7 +241,8 @@ async def list_incidents(
     ) as cur:
         total = (await cur.fetchone())[0]
 
-    offset = (page - 1) * PER_PAGE
+    effective_per_page = per_page if per_page else PER_PAGE
+    offset = (page - 1) * effective_per_page
     list_sql = """
         SELECT
             i.incident_id, i.short_description, i.state, i.priority,
@@ -260,15 +262,15 @@ async def list_incidents(
         ORDER BY i.opened_at DESC
         LIMIT ? OFFSET ?
     """
-    async with db.execute(list_sql, params + [PER_PAGE, offset]) as cur:
+    async with db.execute(list_sql, params + [effective_per_page, offset]) as cur:
         rows = await cur.fetchall()
 
     items = [dict(r) for r in rows]
     return {
         "total":    total,
         "page":     page,
-        "per_page": PER_PAGE,
-        "pages":    max(1, (total + PER_PAGE - 1) // PER_PAGE),
+        "per_page": effective_per_page,
+        "pages":    max(1, (total + effective_per_page - 1) // effective_per_page),
         "items":    items,
     }
 
