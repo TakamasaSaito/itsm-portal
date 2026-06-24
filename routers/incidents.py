@@ -446,7 +446,7 @@ async def list_notes(
         FROM work_note wn
         LEFT JOIN user u ON wn.author_user_id = u.user_id
         WHERE """ + " AND ".join(where) + """
-        ORDER BY wn.created_at ASC
+        ORDER BY wn.created_at DESC
     """
     async with db.execute(sql, params) as cur:
         rows = await cur.fetchall()
